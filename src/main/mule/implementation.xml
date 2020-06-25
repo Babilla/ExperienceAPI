@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd">
+	
+	<flow name="get:routes-implementation-flow" doc:id="d6091abf-17f3-46e2-a453-ba0bf2a1b5a5" >
+		<min-log:info doc:name="Info" doc:id="5ea6cb7a-b436-4f77-be88-e88ec31899a1" msg="The request inside Experience Api to get Routes" transactionProperties="#[vars.loggingProperties]"/>
+		<http:request method="GET" doc:name="Request" doc:id="04b7056f-b478-417d-b3e1-255d01a6881e" config-ref="processApi_HTTP_Request_configuration" path="/booking/{transportType}/routes">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	transportType : attributes.uriParams.transportType
+}]]]></http:uri-params>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	companyCode : attributes.queryParams.companyCode,
+	departureLocationCode : attributes.queryParams.departureLocationCode
+}]]]></http:query-params>
+		</http:request>
+		<min-log:info doc:name="Info" doc:id="d33bcfb6-e1ac-4a14-bdd1-9dee2342c2bb" msg="After Get Routes from Process Api" transactionProperties="#[vars.loggingProperties]"/>
+		<error-handler ref="httpError_Handler" />
+	</flow>
+	<flow name="get:schedules-implementation-flow" doc:id="257b713b-32dc-45d4-b148-7b77910fed90" >
+		<min-log:info doc:name="Info" doc:id="8f00898a-6855-4987-bcfb-64645a7fcd08" transactionProperties="#[vars.loggingProperties]" msg="The request inside Experience Api to get Schedules"/>
+		<http:request method="GET" doc:name="Request" doc:id="b68d6e48-88a1-4a2d-9ed6-b07521c54f5c" config-ref="processApi_HTTP_Request_configuration" path="/booking/{transportType}/schedules">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	transportType : attributes.uriParams.transportType
+}]]]></http:uri-params>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	companyCode : attributes.queryParams.companyCode,
+	destinationLocationCode : attributes.queryParams.destinationLocationCode,
+	requestTimezone : attributes.queryParams.requestTimezone,
+	departureLocationCode : attributes.queryParams.departureLocationCode
+}]]]></http:query-params>
+		</http:request>
+		<min-log:info doc:name="Info" doc:id="84cb4dcb-628d-4156-b2ce-759d88fb0dc1" msg="After calling Get Schedules from Process Api" transactionProperties="#[vars.loggingProperties]"/>
+		<error-handler ref="httpError_Handler" />
+	</flow>
+</mule>

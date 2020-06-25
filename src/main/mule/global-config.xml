@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="booking-experience-api-httpListenerConfig" doc:id="abf97662-4d7c-4052-891f-44ada2f9158d">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="booking-experience-api-config" api="booking-experience-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<http:request-config name="processApi_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="df27a41d-01e8-4d47-8996-0552f9250bfa" basePath="${secure::processApi.http.basePath}" responseTimeout="60000">
+		<http:request-connection host="${secure::processApi.http.host}" port="${secure::processApi.http.port}" />
+	</http:request-config>
+	
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="aaaf27ef-20c5-435d-86a8-2a857dfdd45b" file="dev.yaml" key="victory" >
+		<secure-properties:encrypt algorithm="Blowfish" mode="ECB" />
+	</secure-properties:config>
+	<configuration doc:name="Configuration" doc:id="2762f5d9-4e89-48d2-9a38-60e69ecbab81" defaultErrorHandler-ref="globalError_Handler" />
+	<sub-flow name="audit-log-subflow" doc:id="134b98fc-02f9-411c-b399-656acf78cd0f" >
+		<min-log:new doc:name="initiate transaction properties" doc:id="cd78799d-7ba2-4e9f-8467-61215c97d80a" headers="#[attributes.headers]" target="loggingProperties"/>
+		<min-log:put doc:name="logMessageType" doc:id="3f436dab-65a8-4578-923a-d09cc845eeb9" key="logMessageType" value="INTERMEDIATE" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="set application name" doc:id="3512180d-56c4-4a55-b94b-f46f5f2cd452" key="applicationName" value="#[app.name]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="insert resource" doc:id="f51637c8-ac2f-4d07-be39-8cf4e84bf078" key="inboundUri" value="#[attributes.relativePath]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="Insert Method" doc:id="233c933c-8bf4-45c6-a9bf-fc0d20242cc9" key="httpMethod" value="#[attributes.method]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="insert scheme" doc:id="2af999d0-70da-461e-8fcd-a72b5bd0b853" key="scheme" value="#[attributes.scheme]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+	
+
+</sub-flow>
+	</mule>

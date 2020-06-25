@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+    
+	<flow name="booking-experience-api-main">
+        <http:listener config-ref="booking-experience-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[error.errorType]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="booking-experience-api-config" />
+      
+    </flow>
+    <flow name="booking-experience-api-console">
+        <http:listener config-ref="booking-experience-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="booking-experience-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\booking\(transportType)\routes:booking-experience-api-config">
+		<flow-ref doc:name="get:routes-implementation-flow" doc:id="299e69fc-9739-47ef-acde-030e80cdeaa8" name="get:routes-implementation-flow"/>
+		<error-handler ref="globalError_Handler" />
+    </flow>
+    <flow name="get:\booking\(transportType)\schedules:booking-experience-api-config">
+		<flow-ref doc:name="get:schedules-implementation-flow" doc:id="80a70857-a28a-4f58-9895-9c90e3688e32" name="get:schedules-implementation-flow"/>
+		<error-handler ref="globalError_Handler" />
+    </flow>
+    <error-handler name="httpError_Handler" doc:id="abf97662-4d7c-4052-891f-44ada2f9158d" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d628a921-9e36-419f-b1a8-9935efeaeee9" when="#[error.muleMessage.typedValue != null]">
+			<set-variable value="#[error.muleMessage.typedValue.'error-code']" doc:name="httpStatus" doc:id="b27001e1-c2f4-4d0b-baec-e7ac01b3ad96" variableName="httpStatus"/>
+			<set-variable value="#[error.muleMessage.typedValue.message]" doc:name="errorMessage" doc:id="8c3e8a53-3174-4fee-b2c9-6726effb5a44" variableName="errorMessage"/>
+			<set-variable value="#[error.muleMessage.typedValue.'error-type']" doc:name="errorType" doc:id="f9de1ccf-c636-4dee-9841-177fbefc69ee" variableName="errorType"/>
+		</on-error-propagate>
+	</error-handler>
+</mule>
